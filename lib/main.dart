@@ -1,7 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_kakao_login/firebase_options.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk_user.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   KakaoSdk.init(nativeAppKey: '84c16916e633fba6e3ebe130dff8fcfc');
   runApp(const MyApp());
 }
@@ -67,6 +72,19 @@ class _MyHomePageState extends State<MyHomePage> {
         : await UserApi.instance.loginWithKakaoAccount();
 
     print(token.idToken);
+    // 1. 카카오에서 발급받은 상자 파이어베이스에서 사용되는 객체로 감싸기
+    OAuthProvider oAuthP = OAuthProvider('oidc.oidc.kakao');
+    OAuthCredential credential = oAuthP.credential(
+      accessToken: token.accessToken,
+      idToken: token.idToken,
+    );
+    // 2. 로그인 시키기
+    UserCredential userCred = await FirebaseAuth.instance.signInWithCredential(
+      credential,
+    );
+
+    print(await userCred.user?.getIdToken()); 
+    // 3.
 
     setState(() {
       // This call to setState tells the Flutter framework that something has
